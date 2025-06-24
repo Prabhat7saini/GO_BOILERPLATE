@@ -1,0 +1,82 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Build and IDE files
+bin/
+build/
+vendor/
+
+# Dependency directories (for tools like dep or Go modules)
+Gopkg.lock
+Gopkg.toml
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Go module cache
+/pkg/
+/*.mod
+/*.sum
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Gin-specific (if you're storing temp runtime files or PID)
+gin.pid
+tmp/
+
+# dotenv and configuration files
+.env
+.env.*
+
+# Docker-related
+*.env
+docker-compose.override.yml
+
+# Coverage files
+coverage.*
+cover.*
+
+# Database files (if any local db like SQLite used)
+*.db
+*.sqlite
+
+# Custom settings or local-only files
+local.*
+# Ignore only the .vscode folder in the root directory
+/.vscode/
+# Ignore compiled Go binaries
+cmd/**/*.out
+cmd/**/*.exe
+cmd/**/*.test
+
+# Ignore temporary files in src/
+src/**/*.log
+src/**/*.db
+src/tmp/
+
+# Optional: shell history or temporary scripts
+*.sh~
+
+# Makefile backup
+Makefile.bak
