@@ -16,7 +16,7 @@ import (
 )
 
 type UserService interface {
-	CreateUser(ctx context.Context, user *domain.User) common.ServiceOutput[*domain.User]
+	CreateUser(ctx context.Context, user *domain.User) common.ServiceOutput[*struct{}]
 	GetUserProfile(ctx context.Context, userId int) common.ServiceOutput[int]
 }
 
@@ -28,7 +28,7 @@ func NewUserService(repo repository.UserRepository) UserService {
 	return &userService{repo: repo}
 }
 
-func (s *userService) CreateUser(ctx context.Context, user *domain.User) common.ServiceOutput[*domain.User] {
+func (s *userService) CreateUser(ctx context.Context, user *domain.User) common.ServiceOutput[*struct{}] {
 	fmt.Println("🔍 Checking if user exists:", user.Email)
 
 	// Check for existing user
@@ -37,13 +37,13 @@ func (s *userService) CreateUser(ctx context.Context, user *domain.User) common.
 	if err == nil {
 		// Found user — already exists
 		log.Println("User already exists:", existingUser.Email)
-		return utils.ServiceError[*domain.User](exception.USER_ALREADY_EXISTS)
+		return utils.ServiceError[*struct{}](exception.USER_ALREADY_EXISTS)
 	}
 
 	if err != gorm.ErrRecordNotFound {
 		// Unexpected error
 		log.Println("Error while checking existing user:", err)
-		return utils.ServiceError[*domain.User](exception.INTERNAL_SERVER_ERROR)
+		return utils.ServiceError[*struct{}](exception.INTERNAL_SERVER_ERROR)
 	}
 
 	hashedPassword := utils.HashPassword(user.Password)
@@ -56,12 +56,12 @@ func (s *userService) CreateUser(ctx context.Context, user *domain.User) common.
 
 	// Create new user using repository
 	if err := s.repo.Create(ctx, dbUser); err != nil {
-		return utils.ServiceError[*domain.User](exception.INTERNAL_SERVER_ERROR)
+		return utils.ServiceError[*struct{}](exception.INTERNAL_SERVER_ERROR)
 	}
 
-	return common.ServiceOutput[*domain.User]{
+	return common.ServiceOutput[*struct{}]{
 		Message:        common.USER_REGISTER_SUCCESS,
-		OutputData:     &domain.User{Name: dbUser.Name, Email: dbUser.Email},
+		OutputData:     nil,
 		HttpStatusCode: http.StatusCreated,
 	}
 }

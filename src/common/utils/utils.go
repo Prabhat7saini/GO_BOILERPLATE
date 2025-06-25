@@ -24,7 +24,7 @@ func SendRestResponse[T any](ctx *gin.Context, output common.ServiceOutput[T]) {
 	ctx.JSON(output.HttpStatusCode, common.ApiResponse[T]{
 		Code:    "000000",
 		Message: fallbackIfEmpty(output.Message, "SUCCESS"),
-		Data:    output.OutputData,
+		Data:    output.OutputData ,
 	})
 }
 
