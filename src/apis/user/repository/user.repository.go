@@ -41,7 +41,7 @@ func (r *userRepository) FindByFields(ctx context.Context, conditions map[string
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil 
 		}
-		return nil, err 
+		return nil, err // real DB error
 	}
 	return &user, nil
 }
