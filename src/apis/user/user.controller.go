@@ -6,6 +6,7 @@ import (
 	common "boiler-platecode/src/common/const"
 	"boiler-platecode/src/common/utils"
 	"fmt"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,15 +27,14 @@ func (u *UserController) InitUserRoutes(router *gin.Engine) {
 	users.POST("/", u.CreateUser)
 }
 
-
 func (u *UserController) RegisterPublicRoutes(router *gin.RouterGroup) {
 	users := router.Group("/users")
 	users.POST("/", u.CreateUser)
 }
 
 func (u *UserController) RegisterProtectedRoutes(router *gin.RouterGroup) {
-	// users := router.Group("/users")
-	// users.GET("/profile", u.GetProfile)
+	users := router.Group("/users")
+	users.GET("/profile", u.GetUserProfile)
 }
 
 func (u *UserController) RegisterPrivateRoutes(router *gin.RouterGroup) {
@@ -62,5 +62,24 @@ func (u *UserController) CreateUser(ctx *gin.Context) {
 	}
 
 	output := u.userService.CreateUser(ctx, user)
+	utils.SendRestResponse(ctx, output)
+}
+
+
+func (u *UserController) GetUserProfile(ctx *gin.Context) {
+	userId, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "User ID not found in context"})
+		return
+	}
+
+	// Type assert to int
+	id, ok := userId.(int)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID type"})
+		return
+	}
+
+	output := u.userService.GetUserProfile(ctx, id)
 	utils.SendRestResponse(ctx, output)
 }

@@ -5,6 +5,8 @@ import (
 	"boiler-platecode/src/apis/auth/validator"
 	common "boiler-platecode/src/common/const"
 	"boiler-platecode/src/common/utils"
+	"boiler-platecode/src/core/config"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -50,6 +52,10 @@ func (auth *AuthController) Login(ctx *gin.Context) {
 		Password: req.PASSWORD,
 	}
 
+
+	authTokenExp := config.AppConfig.AthTokenExp
+
 	output := auth.authService.Login(ctx, reqData)
+	ctx.SetCookie(common.Access_Token, output.OutputData.AccessToken, authTokenExp*60, "/", "", false, true)
 	utils.SendRestResponse(ctx, output)
 }

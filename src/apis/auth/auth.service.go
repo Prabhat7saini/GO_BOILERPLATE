@@ -26,59 +26,61 @@ func NewAuthService(userRepo repository.UserRepository) AuthService {
 }
 
 func (a *authService) Login(ctx context.Context, reqBody *domain.Login) common.ServiceOutput[*domain.LoginResponse] {
-
-	existingUser, err := a.userRepo.FindByFields(ctx, map[string]interface{}{"email": reqBody.Email}, "id", "name", "is_active", "password")
-
+	existingUser, err := a.userRepo.FindByFields(
+		ctx,
+		map[string]interface{}{"email": reqBody.Email},
+		"id", "name", "is_active", "password",
+	)
 	if err != nil {
-		log.Printf("existing user error%+v", err)
-		return common.ServiceOutput[*domain.LoginResponse]{
-			Exception: exception.GetException(exception.INTERNAL_SERVER_ERROR),
-		}
+		log.Printf("Error fetching user: %+v", err)
+		return utils.ServiceError[*domain.LoginResponse](exception.INTERNAL_SERVER_ERROR)
 	}
 
 	if existingUser == nil {
-		log.Printf("existing user not found")
-		return common.ServiceOutput[*domain.LoginResponse]{
-			Exception: exception.GetException(exception.USER_NOT_FOUND),
-		}
+		log.Println("User not found")
+		return utils.ServiceError[*domain.LoginResponse](exception.USER_NOT_FOUND)
 	}
 
-	checkPassword := utils.CheckPassword(existingUser.Password, reqBody.Password)
-	if !checkPassword {
-		log.Printf("password not match")
-		return common.ServiceOutput[*domain.LoginResponse]{
-			Exception: exception.GetException(exception.INVALID_CREDENTIALS),
-		}
+	if !utils.CheckPassword(existingUser.Password, reqBody.Password) {
+		log.Println("Invalid password")
+		return utils.ServiceError[*domain.LoginResponse](exception.INVALID_CREDENTIALS)
 	}
 
-	secret := config.AppConfig.AuthJwtSecret
-
-	authTokenExp := config.AppConfig.AthTokenExp
-	
-	token, err := utils.GenerateJwtToken(common.AccessToken, existingUser.ID, authTokenExp, secret)
-
+	authToken, err := utils.GenerateJwtToken(
+		common.AccessToken,
+		existingUser.ID,
+		config.AppConfig.AthTokenExp,
+		config.AppConfig.AuthJwtSecret,
+	)
 	if err != nil {
-		log.Printf("Generate AuthToken error: %v", err)
+		log.Printf("Error generating access token: %v", err)
+		return utils.ServiceError[*domain.LoginResponse](exception.INTERNAL_SERVER_ERROR)
+	}
 
-		return common.ServiceOutput[*domain.LoginResponse]{
-			Exception: exception.GetException(exception.INTERNAL_SERVER_ERROR),
-		}
+	refreshToken, err := utils.GenerateJwtToken(
+		common.RefreshToken,
+		existingUser.ID,
+		config.AppConfig.RefreshTokenExp,
+		config.AppConfig.RefreshJwtSecret,
+	)
+	if err != nil {
+		log.Printf("Error generating refresh token: %v", err)
+		return utils.ServiceError[*domain.LoginResponse](exception.INTERNAL_SERVER_ERROR)
 	}
-	now := time.Now()
-	updateUserErr := a.userRepo.UpdateFields(ctx, map[string]interface{}{"id": existingUser.ID}, map[string]interface{}{"last_login": now})
-	if updateUserErr != nil {
-		log.Println("Failed to update last login:", err)
-		// Optionally return internal error
-		return common.ServiceOutput[*domain.LoginResponse]{
-			Exception: exception.GetException(exception.INTERNAL_SERVER_ERROR),
-		}
+
+	if err := a.userRepo.UpdateFields(
+		ctx,
+		map[string]interface{}{"id": existingUser.ID},
+		map[string]interface{}{"last_login": time.Now()},
+	); err != nil {
+		log.Printf("Failed to update last login: %v", err)
+		return utils.ServiceError[*domain.LoginResponse](exception.INTERNAL_SERVER_ERROR)
 	}
-	response := &domain.LoginResponse{
-		AccessToken: token,
-	}
+
 	return common.ServiceOutput[*domain.LoginResponse]{
 		Message:        "Login Success",
-		OutputData:     response,
+		OutputData:     &domain.LoginResponse{AccessToken: authToken, RefreshToken: refreshToken},
 		HttpStatusCode: http.StatusOK,
 	}
 }
+

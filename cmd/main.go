@@ -2,8 +2,6 @@ package main
 
 import (
 	"boiler-platecode/src/apis"
-	"boiler-platecode/src/apis/auth"
-	"boiler-platecode/src/apis/user"
 	"boiler-platecode/src/common/validator"
 	"boiler-platecode/src/core/config"
 	"boiler-platecode/src/core/database"
@@ -30,39 +28,39 @@ func main() {
 	}
 	gin.SetMode(mode)
 
+
 	// Get port
 	port := config.AppConfig.PORT
 	addr := ":" + port
+
 
 	// Initialize DB and Validator
 	database.InitDB()
 	db := database.GetDB()
 	validator.RegisterCustomValidations()
 
-	// Initialize controllers
-	userController := user.InitUserController(db)
-	authController := auth.InitAuthController(db)
 
-	// Register all controllers with ApiController
-	apiController := apis.NewApiController(userController, authController)
-
+	
 	// Setup Gin
 	r := gin.Default()
 	if err := r.SetTrustedProxies([]string{"127.0.0.1"}); err != nil {
 		log.Fatalf("Failed to set trusted proxies: %v", err)
 	}
+	
+	// Initialize API controller
+	apiController := apis.InitApiController(db)
+
+	// Register versioned API routes
+	apiController.RegisterRoutes(r)
 
 	// Root Health Route
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message":     "Welcome to the API",
 			"version":     "v1",
-			"environment": os.Getenv("ENV"),
 		})
 	})
 
-	// Register versioned API routes
-	apiController.RegisterRoutes(r)
 
 	// Create and run HTTP server
 	srv := &http.Server{

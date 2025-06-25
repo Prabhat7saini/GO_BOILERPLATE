@@ -13,6 +13,9 @@ type EnvConfig struct {
 	PORT          string
 	AuthJwtSecret string
 	AthTokenExp   int
+	RefreshJwtSecret string
+	RefreshTokenExp int
+	RedisDb        int
 	RedisHost     string
 	RedisPort     string
 	DbUrl         string
@@ -31,6 +34,8 @@ func LoadEnv() {
 		PORT:          getEnv("PORT"),
 		AuthJwtSecret: getEnv("ACCESS_JWT_SECRET"),
 		AthTokenExp:   getEnvAsInt("ACCESS_TOKEN_EXPIRE_IN_MINUTES"),
+		RefreshJwtSecret: getEnv("REFRESH_JWT_SECRET"),
+		RefreshTokenExp: getEnvAsInt("REFRESH_JWT_EXPIRE_IN_MINUTES"),
 		DbUrl:         getEnv("DB_URL"),
 		RedisHost:     getEnv("REDIS_HOST"),
 		RedisPort:     getEnv("REDIS_PORT"),

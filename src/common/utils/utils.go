@@ -2,6 +2,7 @@ package utils
 
 import (
 	common "boiler-platecode/src/common/const"
+	"boiler-platecode/src/common/const/exception"
 	"errors"
 	"log"
 	"time"
@@ -35,7 +36,7 @@ func fallbackIfEmpty(preferred string, fallback string) string {
 }
 
 func HashPassword(password string) string {
-	
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Panic("Error While hashing password: ", err)
@@ -47,12 +48,10 @@ func CheckPassword(hashedPassword string, password string) bool {
 	return err == nil
 }
 
-
-
-func GenerateJwtToken(tokenType common.TokenType, userId uint, expTimeInMinutes int,secret string) (string, error) {
+func GenerateJwtToken(tokenType common.TokenType, userId uint, expTimeInMinutes int, secret string) (string, error) {
 
 	// secret := os.Getenv("JWT_SECRET")
-	
+
 	claims := jwt.MapClaims{
 		"userId": userId,
 		"type":   tokenType,
@@ -62,7 +61,7 @@ func GenerateJwtToken(tokenType common.TokenType, userId uint, expTimeInMinutes 
 	return token.SignedString([]byte(secret))
 }
 
-func ValidateJwtToken(tokenStr string,secret string) (jwt.MapClaims, error) {
+func ValidateJwtToken(tokenStr string, secret string) (jwt.MapClaims, error) {
 	// secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
 		log.Panic("JWT SECRET is not set in .env file")
@@ -92,4 +91,10 @@ func ValidateJwtToken(tokenStr string,secret string) (jwt.MapClaims, error) {
 	}
 
 	return claims, nil
+}
+
+func ServiceError[T any](code exception.ErrorCode) common.ServiceOutput[T] {
+	return common.ServiceOutput[T]{
+		Exception: exception.GetException(code),
+	}
 }
