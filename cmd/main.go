@@ -5,6 +5,7 @@ import (
 	"boiler-platecode/src/common/validator"
 	"boiler-platecode/src/core/config"
 	"boiler-platecode/src/core/database"
+	"boiler-platecode/src/core/redis"
 
 	"context"
 	"log"
@@ -28,25 +29,24 @@ func main() {
 	}
 	gin.SetMode(mode)
 
-
 	// Get port
 	port := config.AppConfig.PORT
 	addr := ":" + port
-
 
 	// Initialize DB and Validator
 	database.InitDB()
 	db := database.GetDB()
 	validator.RegisterCustomValidations()
 
+	// Initialize Redis connection
+	redis.Init()
 
-	
 	// Setup Gin
 	r := gin.Default()
 	if err := r.SetTrustedProxies([]string{"127.0.0.1"}); err != nil {
 		log.Fatalf("Failed to set trusted proxies: %v", err)
 	}
-	
+
 	// Initialize API controller
 	apiController := apis.InitApiController(db)
 
@@ -56,11 +56,10 @@ func main() {
 	// Root Health Route
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"message":     "Welcome to the API",
-			"version":     "v1",
+			"message": "Welcome to the API",
+			"version": "v1",
 		})
 	})
-
 
 	// Create and run HTTP server
 	srv := &http.Server{

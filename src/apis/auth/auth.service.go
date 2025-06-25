@@ -7,7 +7,9 @@ import (
 	"boiler-platecode/src/common/const/exception"
 	"boiler-platecode/src/common/utils"
 	"boiler-platecode/src/core/config"
+	"boiler-platecode/src/core/redis"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -18,13 +20,16 @@ type AuthService interface {
 }
 
 type authService struct {
-	userRepo repository.UserRepository
+	userRepo     repository.UserRepository
+	redisService redis.RedisService
 }
 
-func NewAuthService(userRepo repository.UserRepository) AuthService {
-	return &authService{userRepo: userRepo}
+func NewAuthService(userRepo repository.UserRepository, redisService redis.RedisService) AuthService {
+	return &authService{
+		userRepo:     userRepo,
+		redisService: redisService,
+	}
 }
-
 func (a *authService) Login(ctx context.Context, reqBody *domain.Login) common.ServiceOutput[*domain.LoginResponse] {
 	existingUser, err := a.userRepo.FindByFields(
 		ctx,
@@ -77,10 +82,16 @@ func (a *authService) Login(ctx context.Context, reqBody *domain.Login) common.S
 		return utils.ServiceError[*domain.LoginResponse](exception.INTERNAL_SERVER_ERROR)
 	}
 
+	if err := a.redisService.SetWithExpiration(
+		fmt.Sprintf("Auth:userId:%d", existingUser.ID),
+		authToken,
+		10,
+	); err != nil {
+		log.Printf("Failed to cache token in Redis: %v", err)
+	}
 	return common.ServiceOutput[*domain.LoginResponse]{
 		Message:        "Login Success",
 		OutputData:     &domain.LoginResponse{AccessToken: authToken, RefreshToken: refreshToken},
 		HttpStatusCode: http.StatusOK,
 	}
 }
-
