@@ -16,6 +16,7 @@ type EnvConfig struct {
 	RedisHost     string
 	RedisPort     string
 	DbUrl         string
+	GinMode       string
 }
 
 var AppConfig *EnvConfig
@@ -26,10 +27,6 @@ func LoadEnv() {
 		log.Println("Error loading .env file", err)
 	}
 
-
-
-	
-
 	AppConfig = &EnvConfig{
 		PORT:          getEnv("PORT"),
 		AuthJwtSecret: getEnv("ACCESS_JWT_SECRET"),
@@ -37,7 +34,9 @@ func LoadEnv() {
 		DbUrl:         getEnv("DB_URL"),
 		RedisHost:     getEnv("REDIS_HOST"),
 		RedisPort:     getEnv("REDIS_PORT"),
+		GinMode:       getEnv("GIN_MODE"),
 	}
+
 }
 
 func getEnv(key string) string {
@@ -47,7 +46,6 @@ func getEnv(key string) string {
 	}
 	return val
 }
-
 
 func getEnvAsInt(key string) int {
 	valStr := getEnv(key)

@@ -26,6 +26,21 @@ func (u *UserController) InitUserRoutes(router *gin.Engine) {
 	users.POST("/", u.CreateUser)
 }
 
+
+func (u *UserController) RegisterPublicRoutes(router *gin.RouterGroup) {
+	users := router.Group("/users")
+	users.POST("/", u.CreateUser)
+}
+
+func (u *UserController) RegisterProtectedRoutes(router *gin.RouterGroup) {
+	// users := router.Group("/users")
+	// users.GET("/profile", u.GetProfile)
+}
+
+func (u *UserController) RegisterPrivateRoutes(router *gin.RouterGroup) {
+	// You can leave this empty for now or add admin-only routes
+}
+
 func (u *UserController) CreateUser(ctx *gin.Context) {
 	fmt.Println("Initializing user routes")
 
