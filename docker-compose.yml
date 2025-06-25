@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: go_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: prabhat
+      POSTGRES_PASSWORD: prabhat
+      POSTGRES_DB: GO
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+    container_name: boilerplate-app
+    ports:
+      - "4000:4000"
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    environment:
+      DB_URL: postgres://prabhat:prabhat@postgres:5432/GO
+    command: ["./boilerplate"]
+
+volumes:
+  postgres_data:

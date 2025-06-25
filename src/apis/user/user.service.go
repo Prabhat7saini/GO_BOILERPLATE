@@ -17,7 +17,7 @@ import (
 
 type UserService interface {
 	CreateUser(ctx context.Context, user *domain.User) common.ServiceOutput[*domain.User]
-	GetUserProfile(ctx context.Context ,userId int) common.ServiceOutput[int]
+	GetUserProfile(ctx context.Context, userId int) common.ServiceOutput[int]
 }
 
 type userService struct {
@@ -66,12 +66,12 @@ func (s *userService) CreateUser(ctx context.Context, user *domain.User) common.
 	}
 }
 
+func (s *userService) GetUserProfile(ctx context.Context, userId int) common.ServiceOutput[int] {
 
-func  (s *userService) GetUserProfile(ctx context.Context ,userId int)common.ServiceOutput[int]{
-return  common.ServiceOutput[int]{
-	Message: common.USER_PROFILE,
-	OutputData: userId,
-	HttpStatusCode: http.StatusOK,
-}
+	return common.ServiceOutput[int]{
+		Message:        common.USER_PROFILE,
+		OutputData:     userId,
+		HttpStatusCode: http.StatusOK,
+	}
 
 }

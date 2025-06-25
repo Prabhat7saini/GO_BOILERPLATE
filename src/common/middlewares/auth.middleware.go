@@ -1,4 +1,4 @@
-package middleware
+package middlewares
 
 import (
 	"boiler-platecode/src/common/const/exception"

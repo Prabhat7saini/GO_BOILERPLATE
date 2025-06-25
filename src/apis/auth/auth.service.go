@@ -24,10 +24,10 @@ type authService struct {
 	redisService redis.RedisService
 }
 
-func NewAuthService(userRepo repository.UserRepository, redisService redis.RedisService) AuthService {
+func NewAuthService(userRepo repository.UserRepository, redisService *redis.RedisService) AuthService {
 	return &authService{
 		userRepo:     userRepo,
-		redisService: redisService,
+		redisService: *redisService,
 	}
 }
 func (a *authService) Login(ctx context.Context, reqBody *domain.Login) common.ServiceOutput[*domain.LoginResponse] {

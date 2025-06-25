@@ -3,7 +3,7 @@ package apis
 import (
 	"boiler-platecode/src/apis/auth"
 	"boiler-platecode/src/apis/user"
-	middleware "boiler-platecode/src/common/middlewares"
+	middlewares "boiler-platecode/src/common/middlewares"
 	"boiler-platecode/src/core/redis"
 
 	"github.com/gin-gonic/gin"
@@ -21,13 +21,13 @@ type ApiController struct {
 	redisService redis.RedisService
 }
 
-func NewApiController(redisService redis.RedisService, registrars ...RouteRegistrar) *ApiController {
+func NewApiController(redisService *redis.RedisService, registrars ...RouteRegistrar) *ApiController {
 	return &ApiController{
-		redisService: redisService,
+		redisService: *redisService,
 		registrars:   registrars,
 	}
 }
-func InitApiController(db *gorm.DB, redisService redis.RedisService) *ApiController {
+func InitApiController(db *gorm.DB, redisService *redis.RedisService) *ApiController {
 	userController := user.InitUserController(db)
 	authController := auth.InitAuthController(db, redisService)
 
@@ -38,12 +38,12 @@ func (api *ApiController) RegisterRoutes(router *gin.Engine) {
 	apiV1 := router.Group("/api/v1/user-service")
 
 	public := apiV1.Group("/")
-	protected := apiV1.Group("/")
-	private := apiV1.Group("/admin")
+	protected := apiV1.Group("/protected")
+	private := apiV1.Group("/private")
 
 	// Apply auth middlewares
-	protected.Use(middleware.AuthMiddleware(api.redisService))
-	// private.Use(middlewares.AuthMiddleware(), middlewares.AdminMiddleware())
+	protected.Use(middlewares.AuthMiddleware(api.redisService))
+	private.Use(middlewares.AuthMiddleware(api.redisService), )
 
 	// Register routes from all controllers
 	for _, registrar := range api.registrars {

@@ -1,0 +1,7 @@
+# Prevent unnecessary files from being copied
+.git
+.vscode
+*.log
+*.md
+tmp/
+Dockerfile

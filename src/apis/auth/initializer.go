@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func InitAuthController(db *gorm.DB,redisService redis.RedisService) *AuthController {
+func InitAuthController(db *gorm.DB,redisService *redis.RedisService) *AuthController {
 	repo := repository.NewUserRepository(db)
 	service := NewAuthService(repo,redisService)
 	controller := NewAuthController(service)

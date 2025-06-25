@@ -50,7 +50,7 @@ func main() {
 	redis.Init()
 	redisService:=redis.NewRedisService()
 	// Initialize API controller
-	apiController := apis.InitApiController(db,redisService)
+	apiController := apis.InitApiController(db,&redisService)
 
 	// Register versioned API routes
 	apiController.RegisterRoutes(r)
