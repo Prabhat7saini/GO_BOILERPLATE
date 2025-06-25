@@ -16,11 +16,22 @@ func NewAuthController(authService AuthService) *AuthController {
 	return &AuthController{authService: authService}
 }
 
-func (auth *AuthController) InitAuthRoutes(router *gin.Engine) {
+// ✅ RouteRegistrar implementation
+
+func (auth *AuthController) RegisterPublicRoutes(router *gin.RouterGroup) {
 	auths := router.Group("/auth")
 	auths.POST("/login", auth.Login)
 }
 
+func (auth *AuthController) RegisterProtectedRoutes(router *gin.RouterGroup) {
+	// No protected routes currently
+}
+
+func (auth *AuthController) RegisterPrivateRoutes(router *gin.RouterGroup) {
+	// No admin-only routes currently
+}
+
+// 🧠 Actual controller logic
 func (auth *AuthController) Login(ctx *gin.Context) {
 	var req validator.Login
 
@@ -41,5 +52,4 @@ func (auth *AuthController) Login(ctx *gin.Context) {
 
 	output := auth.authService.Login(ctx, reqData)
 	utils.SendRestResponse(ctx, output)
-
 }
