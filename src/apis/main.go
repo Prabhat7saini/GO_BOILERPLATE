@@ -35,7 +35,7 @@ func InitApiController(db *gorm.DB, redisService redis.RedisService) *ApiControl
 }
 
 func (api *ApiController) RegisterRoutes(router *gin.Engine) {
-	apiV1 := router.Group("/api/v1")
+	apiV1 := router.Group("/api/v1/user-service")
 
 	public := apiV1.Group("/")
 	protected := apiV1.Group("/")
