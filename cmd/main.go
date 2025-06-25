@@ -38,16 +38,16 @@ func main() {
 	db := database.GetDB()
 	validator.RegisterCustomValidations()
 
-	// Initialize Redis connection
-	redis.Init()
-
+	
 	// Setup Gin
 	r := gin.Default()
 	if err := r.SetTrustedProxies([]string{"127.0.0.1"}); err != nil {
 		log.Fatalf("Failed to set trusted proxies: %v", err)
 	}
-
-
+	
+	
+	// Initialize Redis connection
+	redis.Init()
 	redisService:=redis.NewRedisService()
 	// Initialize API controller
 	apiController := apis.InitApiController(db,redisService)
