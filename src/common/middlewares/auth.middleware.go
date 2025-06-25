@@ -4,13 +4,14 @@ import (
 	"boiler-platecode/src/common/const/exception"
 	"boiler-platecode/src/common/utils"
 	"boiler-platecode/src/core/config"
-	"log"
+	"boiler-platecode/src/core/redis"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware() gin.HandlerFunc {
+func AuthMiddleware(redisService redis.RedisService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get token from cookie
 		token, err := c.Cookie("access_token")
@@ -30,18 +31,25 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		log.Printf("token decodevalue %v\n", claims)
-		
+
+
 		// Store user ID in context
-		if userID, ok := claims["userId"].(float64); ok {
+		if userIDFloat, ok := claims["userId"].(float64); ok {
+			userID := int(userIDFloat)
+			storeToken, err := redisService.Get(fmt.Sprintf("Auth:userId:%d", int(userID)))
+			if err != nil || storeToken != token {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+					"message": "unauthorized access",
+				})
+				return
+			}
 			c.Set("userID", int(userID))
 		} else {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "Invalid token claims",
+				"message": "Invalid token claims",
 			})
 			return
 		}
-
 
 		c.Next()
 	}

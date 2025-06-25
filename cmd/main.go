@@ -47,8 +47,10 @@ func main() {
 		log.Fatalf("Failed to set trusted proxies: %v", err)
 	}
 
+
+	redisService:=redis.NewRedisService()
 	// Initialize API controller
-	apiController := apis.InitApiController(db)
+	apiController := apis.InitApiController(db,redisService)
 
 	// Register versioned API routes
 	apiController.RegisterRoutes(r)
