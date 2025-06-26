@@ -69,7 +69,7 @@ func (s *userService) CreateUser(ctx context.Context, user *domain.User) common.
 }
 
 func (s *userService) GetUserProfile(ctx context.Context, userId int) common.ServiceOutput[int] {
-
+logger.Warning(module,"GetUserProfile","get user profile")
 	return common.ServiceOutput[int]{
 		Message:        common.USER_PROFILE,
 		OutputData:     userId,

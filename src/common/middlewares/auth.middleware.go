@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"boiler-platecode/src/common/const/exception"
+	"boiler-platecode/src/common/lib/logger"
 	"boiler-platecode/src/common/utils"
 	"boiler-platecode/src/core/config"
 	"boiler-platecode/src/core/redis"
@@ -11,11 +12,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	module = "Auth Middleware"
+)
+
 func AuthMiddleware(redisService redis.RedisService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get token from cookie
 		token, err := c.Cookie("access_token")
 		if err != nil || token == "" {
+			logger.Warning(module, "AuthMiddlerWare", "Token not found")
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": exception.GetException(exception.INTERNAL_SERVER_ERROR).Message,
 			})
@@ -30,8 +36,6 @@ func AuthMiddleware(redisService redis.RedisService) gin.HandlerFunc {
 			})
 			return
 		}
-
-
 
 		// Store user ID in context
 		if userIDFloat, ok := claims["userId"].(float64); ok {

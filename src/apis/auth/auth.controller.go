@@ -56,6 +56,12 @@ func (auth *AuthController) Login(ctx *gin.Context) {
 	authTokenExp := config.AppConfig.AthTokenExp
 
 	output := auth.authService.Login(ctx, reqData)
+		// ✅ Check if output or output.OutputData is nil
+	if output.OutputData == nil {
+		utils.SendRestResponse(ctx, output)
+		return
+	}
+
 	ctx.SetCookie(common.Access_Token, output.OutputData.AccessToken, authTokenExp*60, "/", "", false, true)
 	utils.SendRestResponse(ctx, output)
 }
