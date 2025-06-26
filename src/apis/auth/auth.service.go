@@ -5,15 +5,16 @@ import (
 	"boiler-platecode/src/apis/user/repository"
 	common "boiler-platecode/src/common/const"
 	"boiler-platecode/src/common/const/exception"
+	"boiler-platecode/src/common/lib/logger"
 	"boiler-platecode/src/common/utils"
 	"boiler-platecode/src/core/config"
 	"boiler-platecode/src/core/redis"
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 )
+const (module="Auth Service")
 
 type AuthService interface {
 	Login(ctx context.Context, reqBody *domain.Login) common.ServiceOutput[*domain.LoginResponse]
@@ -37,17 +38,16 @@ func (a *authService) Login(ctx context.Context, reqBody *domain.Login) common.S
 		"id", "name", "is_active", "password",
 	)
 	if err != nil {
-		log.Printf("Error fetching user: %+v", err)
+		logger.Error(module,"Error fetching user: %+v", err)
 		return utils.ServiceError[*domain.LoginResponse](exception.INTERNAL_SERVER_ERROR)
 	}
 
 	if existingUser == nil {
-		log.Println("User not found")
+		logger.Warning(module,"Login","User not found")
 		return utils.ServiceError[*domain.LoginResponse](exception.USER_NOT_FOUND)
 	}
 
 	if !utils.CheckPassword(existingUser.Password, reqBody.Password) {
-		log.Println("Invalid password")
 		return utils.ServiceError[*domain.LoginResponse](exception.INVALID_CREDENTIALS)
 	}
 
@@ -58,7 +58,7 @@ func (a *authService) Login(ctx context.Context, reqBody *domain.Login) common.S
 		config.AppConfig.AuthJwtSecret,
 	)
 	if err != nil {
-		log.Printf("Error generating access token: %v", err)
+		logger .Error(module,"Login", err,"error generating access token")
 		return utils.ServiceError[*domain.LoginResponse](exception.INTERNAL_SERVER_ERROR)
 	}
 
@@ -69,7 +69,7 @@ func (a *authService) Login(ctx context.Context, reqBody *domain.Login) common.S
 		config.AppConfig.RefreshJwtSecret,
 	)
 	if err != nil {
-		log.Printf("Error generating refresh token: %v", err)
+		logger .Error(module,"Login", err,"error generating refresh token")
 		return utils.ServiceError[*domain.LoginResponse](exception.INTERNAL_SERVER_ERROR)
 	}
 
@@ -78,7 +78,7 @@ func (a *authService) Login(ctx context.Context, reqBody *domain.Login) common.S
 		map[string]interface{}{"id": existingUser.ID},
 		map[string]interface{}{"last_login": time.Now()},
 	); err != nil {
-		log.Printf("Failed to update last login: %v", err)
+		logger .Error(module,"Login", err,"error update login date")
 		return utils.ServiceError[*domain.LoginResponse](exception.INTERNAL_SERVER_ERROR)
 	}
 
@@ -87,7 +87,7 @@ func (a *authService) Login(ctx context.Context, reqBody *domain.Login) common.S
 		authToken,
 		10,
 	); err != nil {
-		log.Printf("Failed to cache token in Redis: %v", err)
+		logger .Error(module,"Login", err,"failed to cache access token")
 	}
 	return common.ServiceOutput[*domain.LoginResponse]{
 		Message:        "Login Success",

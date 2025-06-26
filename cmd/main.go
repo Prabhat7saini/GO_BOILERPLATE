@@ -2,13 +2,14 @@ package main
 
 import (
 	"boiler-platecode/src/apis"
+	"boiler-platecode/src/common/lib/logger" 
 	"boiler-platecode/src/common/validator"
 	"boiler-platecode/src/core/config"
 	"boiler-platecode/src/core/database"
 	"boiler-platecode/src/core/redis"
 
 	"context"
-	"log"
+	"errors"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,9 +19,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	module = "main"
+)
+
 func main() {
 	// Load env variables
 	config.LoadEnv()
+
 
 	// Set Gin mode
 	mode := config.AppConfig.GinMode
@@ -38,19 +44,19 @@ func main() {
 	db := database.GetDB()
 	validator.RegisterCustomValidations()
 
-	
 	// Setup Gin
 	r := gin.Default()
 	if err := r.SetTrustedProxies([]string{"127.0.0.1"}); err != nil {
-		log.Fatalf("Failed to set trusted proxies: %v", err)
+		logger.Error(module, "SetTrustedProxies", err)
+		os.Exit(1)
 	}
-	
-	
+
 	// Initialize Redis connection
 	redis.Init()
-	redisService:=redis.NewRedisService()
+	redisService := redis.NewRedisService()
+
 	// Initialize API controller
-	apiController := apis.InitApiController(db,&redisService)
+	apiController := apis.InitApiController(db, &redisService)
 
 	// Register versioned API routes
 	apiController.RegisterRoutes(r)
@@ -70,9 +76,10 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("[START] Server is running on http://localhost%s ", addr)
+		logger.Info(module, "ServerStart", "Server is running on http://localhost"+addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Listen error: %v", err)
+			logger.Error(module, "ListenAndServe", err)
+			os.Exit(1)
 		}
 	}()
 
@@ -81,14 +88,15 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Received shutdown signal. Shutting down server...")
+	logger.Info(module, "Shutdown", "Received shutdown signal. Shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+		logger.Error(module, "Shutdown", errors.New("Server forced to shutdown: "+err.Error()))
+		os.Exit(1)
 	}
 
-	log.Println("Server stopped gracefully.")
+	logger.Info(module, "Shutdown", "Server stopped gracefully.")
 }
