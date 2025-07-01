@@ -2,7 +2,7 @@ package main
 
 import (
 	"boiler-platecode/src/apis"
-	"boiler-platecode/src/common/lib/logger" 
+	"boiler-platecode/src/common/lib/logger"
 	"boiler-platecode/src/common/validator"
 	"boiler-platecode/src/core/config"
 	"boiler-platecode/src/core/database"
@@ -27,7 +27,6 @@ func main() {
 	// Load env variables
 	config.LoadEnv()
 
-
 	// Set Gin mode
 	mode := config.AppConfig.GinMode
 	if mode == "" {
@@ -42,6 +41,7 @@ func main() {
 	// Initialize DB and Validator
 	database.InitDB()
 	db := database.GetDB()
+
 	validator.RegisterCustomValidations()
 
 	// Setup Gin
@@ -53,7 +53,7 @@ func main() {
 
 	// Initialize Redis connection
 	redis.Init()
-	redisService := redis.NewRedisService()
+	redisService := redis.GetRedisService()
 
 	// Initialize API controller
 	apiController := apis.InitApiController(db, &redisService)
@@ -96,6 +96,20 @@ func main() {
 	if err := srv.Shutdown(ctx); err != nil {
 		logger.Error(module, "Shutdown", errors.New("Server forced to shutdown: "+err.Error()))
 		os.Exit(1)
+	}
+
+	// Close Redis connection
+	if err := redis.Close(); err != nil {
+		logger.Error(module, "redisClose", errors.New("Redis shutdown  failed: "+err.Error()))
+	} else {
+		logger.Info(module, "Shutdown", "Redis connection closed.")
+	}
+
+	// Close Database connection
+	if err := database.CloseDB(); err != nil {
+		logger.Error(module, "databaseClose", errors.New("database shutdown  failed: "+err.Error()))
+	} else {
+		logger.Info(module, "Shutdown", "Database connection closed.")
 	}
 
 	logger.Info(module, "Shutdown", "Server stopped gracefully.")

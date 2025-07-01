@@ -4,6 +4,7 @@ import (
 	"boiler-platecode/src/core/config"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"gorm.io/driver/postgres"
@@ -11,33 +12,55 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-var DB *gorm.DB
+var (
+	db   *gorm.DB
+	once sync.Once
+)
 
+// InitDB initializes the database singleton
 func InitDB() {
-	dsn := config.AppConfig.DbUrl
+	once.Do(func() {
+		dsn := config.AppConfig.DbUrl
 
-	// ✅ Set GORM to log only warnings and avoid 'record not found' logs
-	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags),
-		logger.Config{
-			SlowThreshold:             time.Second,     // Slow SQL threshold
-			LogLevel:                  logger.Info,     // Only log Warn and above// info print sql and warn not print the sql
-			IgnoreRecordNotFoundError: true,            // suppress 'record not found'
-			Colorful:                  true,            // Pretty output
-		},
-	)
+		// Configure GORM logger
+		newLogger := logger.New(
+			log.New(os.Stdout, "\r\n", log.LstdFlags),
+			logger.Config{
+				SlowThreshold:             time.Second,
+				LogLevel:                  logger.Info, // Use logger.Warn to avoid SQL printing
+				IgnoreRecordNotFoundError: true,
+				Colorful:                  true,
+			},
+		)
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: newLogger,
+		var err error
+		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+			Logger: newLogger,
+		})
+		if err != nil {
+			log.Fatal("❌ Failed to connect DB: ", err)
+		}
+
+		log.Printf("✅ Connected to DB: %s\n", dsn)
 	})
-	if err != nil {
-		log.Fatal("Failed to connect DB................:", err)
-	}
-
-	log.Printf("Connected to DB...............: %s\n", dsn)
-	DB = db
 }
 
+// GetDB provides access to the singleton DB instance
 func GetDB() *gorm.DB {
-	return DB
+	if db == nil {
+		InitDB()
+	}
+	return db
+}
+
+// CloseDB closes the database connection pool
+func CloseDB() error {
+	if db != nil {
+		sqlDB, err := db.DB()
+		if err != nil {
+			return err
+		}
+		return sqlDB.Close()
+	}
+	return nil
 }

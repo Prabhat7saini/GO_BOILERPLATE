@@ -62,6 +62,6 @@ func (auth *AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
-	ctx.SetCookie(common.Access_Token, output.OutputData.AccessToken, authTokenExp*60, "/", "", false, true)
+	ctx.SetCookie(common.Access_Token, output.OutputData.AccessToken, authTokenExp*60, "/", "", true, true)
 	utils.SendRestResponse(ctx, output)
 }
